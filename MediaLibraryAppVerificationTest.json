@@ -1,0 +1,232 @@
+{
+  "trigger_url": "https://api.runscope.com/radar/027aa9ec-8cf4-48cf-895f-72942a67903f/trigger", 
+  "name": "Media Library App Verification Test", 
+  "version": "1.0", 
+  "exported_at": 1497308755, 
+  "steps": [
+    {
+      "headers": {}, 
+      "url": "{{baseURL}}/v1/status", 
+      "variables": [], 
+      "args": {}, 
+      "step_type": "request", 
+      "auth": {}, 
+      "multipart_form": [], 
+      "note": "Tests that the /v1/status endpoint returns 200 OK.", 
+      "fragment": "", 
+      "assertions": [
+        {
+          "comparison": "equal_number", 
+          "value": 200, 
+          "source": "response_status"
+        }
+      ], 
+      "scripts": [], 
+      "before_scripts": [], 
+      "data": "", 
+      "method": "GET"
+    }, 
+    {
+      "url": "{{baseURL}}/v1/media?pageSize=25", 
+      "variables": [], 
+      "multipart_form": [], 
+      "step_type": "request", 
+      "auth": {}, 
+      "fragment": "", 
+      "note": "Tests that the /v1/media endpoint returns a selection of media.", 
+      "headers": {}, 
+      "assertions": [
+        {
+          "comparison": "equal_number", 
+          "value": 200, 
+          "source": "response_status"
+        }
+      ], 
+      "scripts": [
+        "var body = JSON.parse(response.body);\n\nexpect(body, 'GET /v1/media must contain data and metadata key').to.include.keys(['data', 'metadata']);\n\nconst mediaData = body.data;\n\nexpect(typeof mediaData, 'GET /v1/media data must be an object').to.be.equal('object');\nexpect(mediaData, 'GET /v1/media data must contain correct fields').to.include.keys('media');\nexpect(typeof mediaData.media, 'GET /v1/media media must be an object').to.be.equal('object');\nexpect(mediaData.media, 'GET /v1/media media must not be empty').to.not.be.empty;\nexpect(mediaData.media.length, 'GET /v1/media media must have at most pageSize responses').to.be.at.most(25);\n\nconst mediaMetadata = body.metadata;\n\nexpect(typeof mediaMetadata, 'GET /v1/media metadata must be an object').to.be.equal('object');\nexpect(mediaMetadata, 'GET /v1/media metadata must contain correct fields').to.include.keys('cursor');"
+      ], 
+      "before_scripts": [], 
+      "method": "GET"
+    }, 
+    {
+      "headers": {}, 
+      "url": "{{baseURL}}/v1/media?pageSize=1", 
+      "variables": [
+        {
+          "source": "response_json", 
+          "property": "metadata.cursor.next", 
+          "name": "nextCursor"
+        }, 
+        {
+          "source": "response_json", 
+          "property": "data.media[0]", 
+          "name": "firstPageEntry"
+        }
+      ], 
+      "multipart_form": [], 
+      "step_type": "request", 
+      "auth": {}, 
+      "note": "Tests that the /v1/media endpoint only returns the number of responses specified in the pageSize param.", 
+      "fragment": "", 
+      "assertions": [
+        {
+          "comparison": "equal_number", 
+          "value": 200, 
+          "source": "response_status"
+        }
+      ], 
+      "scripts": [
+        "var body = JSON.parse(response.body);\n\nexpect(body, 'GET /v1/media must contain data and metadata key').to.include.keys(['data', 'metadata']);\n\nconst mediaData = body.data;\n\nexpect(typeof mediaData, 'GET /v1/media data must be an object').to.be.equal('object');\nexpect(mediaData, 'GET /v1/media data must contain correct fields').to.include.keys('media');\nexpect(typeof mediaData.media, 'GET /v1/media media must be an object').to.be.equal('object');\nexpect(mediaData.media, 'GET /v1/media media must have pageSize number of entries').to.have.length(1);\n\nconst mediaMetadata = body.metadata;\n\nexpect(typeof mediaMetadata, 'GET /v1/media metadata must be an object').to.be.equal('object');\nexpect(mediaMetadata, 'GET /v1/media metadata must contain correct fields').to.include.keys('cursor');\n\nconst cursor = mediaMetadata.cursor;\n\nexpect(cursor, 'GET /v1/media cursor must contain next field').to.include.keys('next');\nexpect(typeof cursor.next, 'GET /v1/media cursor must contain next field of type string').to.be.equal('string');"
+      ], 
+      "before_scripts": [], 
+      "method": "GET"
+    }, 
+    {
+      "url": "{{baseURL}}/v1/media?pageSize=1&cursor={{nextCursor}}", 
+      "variables": [], 
+      "multipart_form": [], 
+      "step_type": "request", 
+      "auth": {}, 
+      "fragment": "", 
+      "note": "Tests that the /v1/media endpoint returns the next selection of results when given a cursor param.", 
+      "headers": {}, 
+      "assertions": [
+        {
+          "comparison": "equal_number", 
+          "value": 200, 
+          "source": "response_status"
+        }
+      ], 
+      "scripts": [
+        "var body = JSON.parse(response.body);\n\nexpect(body, 'GET /v1/media must contain data and metadata key').to.include.keys(['data', 'metadata']);\n\nconst mediaData = body.data;\n\nexpect(typeof mediaData, 'GET /v1/media data must be an object').to.be.equal('object');\nexpect(mediaData, 'GET /v1/media data must contain correct fields').to.include.keys('media');\nexpect(typeof mediaData.media, 'GET /v1/media media must be an object').to.be.equal('object');\nexpect(mediaData.media, 'GET /v1/media media must have pageSize number of entries').to.have.length(1);\n\nvar firstPageEntry = variables.get('firstPageEntry');\n\nexpect(mediaData.media[0], 'GET /v1/media call with cursor should return different data than previous call').to.not.be.equal(firstPageEntry);"
+      ], 
+      "before_scripts": [], 
+      "method": "GET"
+    }, 
+    {
+      "comparison": "contains", 
+      "left_value": "{{supportedMediaTypes}}", 
+      "step_type": "condition", 
+      "steps": [
+        {
+          "headers": {}, 
+          "url": "{{baseURL}}/v1/media?mediaType=image&pageSize=10", 
+          "variables": [], 
+          "multipart_form": [], 
+          "step_type": "request", 
+          "auth": {}, 
+          "id": "8d3e811b-db91-4739-b0c6-80f89a6d24e9", 
+          "note": "Tests that the /v1/media endpoint only returns image responses when given mediaType=image as a param.", 
+          "fragment": "", 
+          "assertions": [
+            {
+              "comparison": "equal_number", 
+              "value": 200, 
+              "source": "response_status"
+            }
+          ], 
+          "scripts": [
+            "var body = JSON.parse(response.body);\n\nexpect(body, 'GET /v1/media must contain data and metadata key').to.include.keys(['data', 'metadata']);\n\nconst mediaData = body.data;\n\nexpect(typeof mediaData, 'GET /v1/media data must be an object').to.be.equal('object');\nexpect(mediaData, 'GET /v1/media data must contain correct fields').to.include.keys('media');\nexpect(typeof mediaData.media, 'GET /v1/media media must be an object').to.be.equal('object');\nexpect(mediaData.media, 'GET /v1/media media field must not be empty').to.have.length.above(0);\n\nfor(var index in mediaData.media) {\n    var mediaItem = mediaData.media[index];\n\n    expect(mediaItem, 'GET /v1/media image results must contain correct fields').to.include.keys([\n        'id',\n        'name',\n        'mediaType',\n        'original',\n        'thumbnail'\n    ]);\n    expect(typeof mediaItem.id, 'GET /v1/media images must have id field of type string').to.be.equal('string');\n    expect(typeof mediaItem.name, 'GET /v1/media images must have name field of type string').to.be.equal('string');\n    expect(typeof mediaItem.mediaType, 'GET /v1/media images must have mediaType field of type string').to.be.equal('string');\n    expect(mediaItem.mediaType, 'GET /v1/media images must have mediaType: image').to.be.equal('image');\n    \n    expect(typeof mediaItem.original, 'GET /v1/media non-folder original must be an object').to.be.equal('object');\n    expect(mediaItem.original, 'GET /v1/media non-folder original must contain correct fields').to.include.keys([\n        'url',\n        'width',\n        'height',\n        'sizeInBytes'\n    ]);\n    expect(typeof mediaItem.original.url, 'GET /v1/media original must have url field of type string').to.be.equal('string');\n    expect(typeof mediaItem.original.width, 'GET /v1/media original must have width field of type number').to.be.equal('number');\n    expect(typeof mediaItem.original.height, 'GET /v1/media original must have height field of type number').to.be.equal('number');\n    expect(typeof mediaItem.original.sizeInBytes, 'GET /v1/media original must have sizeInBytes field of type number').to.be.equal('number');\n    \n    expect(typeof mediaItem.thumbnail, 'GET /v1/media thumbnail must be an object').to.be.equal('object');\n    expect(mediaItem.thumbnail, 'GET /v1/media thumbnail must contain correct fields').to.include.keys([\n        'url',\n        'width',\n        'height',\n        'sizeInBytes'\n    ]);\n    expect(typeof mediaItem.thumbnail.url, 'GET /v1/media thumbnail must have url field of type string').to.be.equal('string');\n    expect(typeof mediaItem.thumbnail.width, 'GET /v1/media thumbnail must have width field of type number').to.be.equal('number');\n    expect(typeof mediaItem.thumbnail.height, 'GET /v1/media thumbnail must have height field of type number').to.be.equal('number');\n    expect(typeof mediaItem.thumbnail.sizeInBytes, 'GET /v1/media thumbnail must have sizeInBytes field of type number').to.be.equal('number');\n    \n}"
+          ], 
+          "before_scripts": [], 
+          "method": "GET"
+        }
+      ], 
+      "right_value": "'image'"
+    }, 
+    {
+      "comparison": "contains", 
+      "left_value": "{{supportedMediaTypes}}", 
+      "step_type": "condition", 
+      "steps": [
+        {
+          "url": "{{baseURL}}/v1/media?mediaType=gif&pageSize=10", 
+          "variables": [], 
+          "multipart_form": [], 
+          "step_type": "request", 
+          "auth": {}, 
+          "fragment": "", 
+          "note": "Tests that the /v1/media endpoint only returns gif responses when given mediaType=gif as a param.", 
+          "headers": {}, 
+          "assertions": [
+            {
+              "comparison": "equal_number", 
+              "value": 200, 
+              "source": "response_status"
+            }
+          ], 
+          "scripts": [
+            "var body = JSON.parse(response.body);\n\nexpect(body, 'GET /v1/media must contain data and metadata key').to.include.keys(['data', 'metadata']);\n\nconst mediaData = body.data;\n\nexpect(typeof mediaData, 'GET /v1/media data must be an object').to.be.equal('object');\nexpect(mediaData, 'GET /v1/media data must contain correct fields').to.include.keys('media');\nexpect(typeof mediaData.media, 'GET /v1/media media must be an object').to.be.equal('object');\nexpect(mediaData.media, 'GET /v1/media media field must not be empty').to.have.length.above(0);\n\nfor(var index in mediaData.media) {\n    var mediaItem = mediaData.media[index];\n\n    expect(mediaItem, 'GET /v1/media gif results must contain correct fields').to.include.keys([\n        'id',\n        'name',\n        'mediaType',\n        'original',\n        'thumbnail'\n    ]);\n    expect(typeof mediaItem.id, 'GET /v1/media gifs must have id field of type string').to.be.equal('string');\n    expect(typeof mediaItem.name, 'GET /v1/media gifs must have name field of type string').to.be.equal('string');\n    expect(typeof mediaItem.mediaType, 'GET /v1/media gifs must have mediaType field of type string').to.be.equal('string');\n    expect(mediaItem.mediaType, 'GET /v1/media gifs must have mediaType: gif').to.be.equal('gif');\n    \n    expect(typeof mediaItem.original, 'GET /v1/media original must be an object').to.be.equal('object');\n    expect(mediaItem.original, 'GET /v1/media original must contain correct fields').to.include.keys([\n        'url',\n        'width',\n        'height',\n        'sizeInBytes'\n    ]);\n    expect(typeof mediaItem.original.url, 'GET /v1/media original must have url field of type string').to.be.equal('string');\n    expect(typeof mediaItem.original.width, 'GET /v1/media original must have width field of type number').to.be.equal('number');\n    expect(typeof mediaItem.original.height, 'GET /v1/media original must have height field of type number').to.be.equal('number');\n    expect(typeof mediaItem.original.sizeInBytes, 'GET /v1/media original must have sizeInBytes field of type number').to.be.equal('number');\n    \n    expect(typeof mediaItem.thumbnail, 'GET /v1/media thumbnail must be an object').to.be.equal('object');\n    expect(mediaItem.thumbnail, 'GET /v1/media thumbnail must contain correct fields').to.include.keys([\n        'url',\n        'width',\n        'height',\n        'sizeInBytes'\n    ]);\n    expect(typeof mediaItem.thumbnail.url, 'GET /v1/media thumbnail must have url field of type string').to.be.equal('string');\n    expect(typeof mediaItem.thumbnail.width, 'GET /v1/media thumbnail must have width field of type number').to.be.equal('number');\n    expect(typeof mediaItem.thumbnail.height, 'GET /v1/media thumbnail must have height field of type number').to.be.equal('number');\n    expect(typeof mediaItem.thumbnail.sizeInBytes, 'GET /v1/media thumbnail must have sizeInBytes field of type number').to.be.equal('number');\n    \n}"
+          ], 
+          "id": "887bca38-37db-46a8-999b-d703a2988279", 
+          "before_scripts": [], 
+          "method": "GET"
+        }
+      ], 
+      "right_value": "'gif'"
+    }, 
+    {
+      "comparison": "contains", 
+      "left_value": "{{supportedMediaTypes}}", 
+      "step_type": "condition", 
+      "steps": [
+        {
+          "headers": {}, 
+          "url": "{{baseURL}}/v1/media?mediaType=video&pageSize=10", 
+          "variables": [], 
+          "multipart_form": [], 
+          "step_type": "request", 
+          "auth": {}, 
+          "id": "ebe22303-4e70-4251-ac46-4d272f5ab3a3", 
+          "note": "Tests that the /v1/media endpoint only returns video responses when given mediaType=video as a param.", 
+          "fragment": "", 
+          "assertions": [
+            {
+              "comparison": "equal_number", 
+              "value": 200, 
+              "source": "response_status"
+            }
+          ], 
+          "scripts": [
+            "var body = JSON.parse(response.body);\n\nexpect(body, 'GET /v1/media must contain data and metadata key').to.include.keys(['data', 'metadata']);\n\nconst mediaData = body.data;\n\nexpect(typeof mediaData, 'GET /v1/media data must be an object').to.be.equal('object');\nexpect(mediaData, 'GET /v1/media data must contain correct fields').to.include.keys('media');\nexpect(typeof mediaData.media, 'GET /v1/media media must be an object').to.be.equal('object');\nexpect(mediaData.media, 'GET /v1/media media field must not be empty').to.have.length.above(0);\n\nfor(var index in mediaData.media) {\n    var mediaItem = mediaData.media[index];\n\n    expect(mediaItem, 'GET /v1/media video results must contain correct fields').to.include.keys([\n        'id',\n        'name',\n        'mediaType',\n        'original',\n        'thumbnail'\n    ]);\n    expect(typeof mediaItem.id, 'GET /v1/media videos must have id field of type string').to.be.equal('string');\n    expect(typeof mediaItem.name, 'GET /v1/media videos must have name field of type string').to.be.equal('string');\n    expect(typeof mediaItem.mediaType, 'GET /v1/media videos must have mediaType field of type string').to.be.equal('string');\n    expect(mediaItem.mediaType, 'GET /v1/media videos must have mediaType: video').to.be.equal('video');\n    \n    expect(typeof mediaItem.original, 'GET /v1/media original must be an object').to.be.equal('object');\n    expect(mediaItem.original, 'GET /v1/media original must contain correct fields').to.include.keys([\n        'url',\n        'width',\n        'height',\n        'sizeInBytes'\n    ]);\n    expect(typeof mediaItem.original.url, 'GET /v1/media original must have url field of type string').to.be.equal('string');\n    expect(typeof mediaItem.original.width, 'GET /v1/media original must have width field of type number').to.be.equal('number');\n    expect(typeof mediaItem.original.height, 'GET /v1/media original must have height field of type number').to.be.equal('number');\n    expect(typeof mediaItem.original.sizeInBytes, 'GET /v1/media original must have sizeInBytes field of type number').to.be.equal('number');\n    \n    expect(typeof mediaItem.thumbnail, 'GET /v1/media thumbnail must be an object').to.be.equal('object');\n    expect(mediaItem.thumbnail, 'GET /v1/media thumbnail must contain correct fields').to.include.keys([\n        'url',\n        'width',\n        'height',\n        'sizeInBytes'\n    ]);\n    expect(typeof mediaItem.thumbnail.url, 'GET /v1/media thumbnail must have url field of type string').to.be.equal('string');\n    expect(typeof mediaItem.thumbnail.width, 'GET /v1/media thumbnail must have width field of type number').to.be.equal('number');\n    expect(typeof mediaItem.thumbnail.height, 'GET /v1/media thumbnail must have height field of type number').to.be.equal('number');\n    expect(typeof mediaItem.thumbnail.sizeInBytes, 'GET /v1/media thumbnail must have sizeInBytes field of type number').to.be.equal('number');\n    \n}"
+          ], 
+          "before_scripts": [], 
+          "method": "GET"
+        }
+      ], 
+      "right_value": "'video'"
+    }, 
+    {
+      "comparison": "contains", 
+      "left_value": "{{supportedMediaTypes}}", 
+      "step_type": "condition", 
+      "steps": [
+        {
+          "headers": {}, 
+          "url": "{{baseURL}}/v1/media?mediaType=folder&pageSize=10", 
+          "variables": [], 
+          "multipart_form": [], 
+          "step_type": "request", 
+          "auth": {}, 
+          "id": "aeb6c5a9-eacf-485e-b8fe-867c67d8907c", 
+          "note": "Tests that the /v1/media endpoint only returns folder responses when given mediaType=folder as a param.", 
+          "fragment": "", 
+          "assertions": [
+            {
+              "comparison": "equal_number", 
+              "value": 200, 
+              "source": "response_status"
+            }
+          ], 
+          "scripts": [
+            "var body = JSON.parse(response.body);\n\nexpect(body, 'GET /v1/media must contain data and metadata key').to.include.keys(['data', 'metadata']);\n\nconst mediaData = body.data;\n\nexpect(typeof mediaData, 'GET /v1/media data must be an object').to.be.equal('object');\nexpect(mediaData, 'GET /v1/media data must contain correct fields').to.include.keys('media');\nexpect(typeof mediaData.media, 'GET /v1/media media must be an object').to.be.equal('object');\nexpect(mediaData.media, 'GET /v1/media media field must not be empty').to.have.length.above(0);\n\nfor(var index in mediaData.media) {\n    var mediaItem = mediaData.media[index];\n\n    expect(mediaItem, 'GET /v1/media folder results must contain correct fields').to.include.keys([\n        'id',\n        'name',\n        'mediaType'\n    ]);\n    expect(typeof mediaItem.id, 'GET /v1/media folders must have id field of type string').to.be.equal('string');\n    expect(typeof mediaItem.name, 'GET /v1/media folders must have name field of type string').to.be.equal('string');\n    expect(typeof mediaItem.mediaType, 'GET /v1/media folders must have mediaType field of type string').to.be.equal('string');\n    expect(mediaItem.mediaType, 'GET /v1/media folders must have mediaType: folder').to.be.equal('folder');\n    \n    expect(mediaItem, 'GET /v1/media folder results must not contain original/thumbnail fields').to.not.include.keys([\n        'thumbnail',\n        'original'\n        ]);\n}"
+          ], 
+          "before_scripts": [], 
+          "method": "GET"
+        }
+      ], 
+      "right_value": "'folder'"
+    }
+  ], 
+  "description": "Test used to verify that apps developed for Hootsuite's Media Library fulfill our API requirements."
+}
