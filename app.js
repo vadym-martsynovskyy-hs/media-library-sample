@@ -8,7 +8,7 @@ var app = express();
 // Unsplash API
 const API_URL = 'https://api.unsplash.com/photos/search';
 const TOS_URL = 'https://unsplash.com/terms';
-const CLIENT_ID = '3c4787225ca79319cbfabaf469c1331c01ceb356c56de022215dccd454da1586';
+const CLIENT_ID = '<UNSPLASH API KEY HERE>';
 
 app.use('/v1/media', function (req, res, next) {
   // Call 3rd party API to retrieve content
@@ -58,6 +58,10 @@ app.use('/v1/media', function (req, res, next) {
 
     // Return result
     res.json(mediaResponse);
+  }).catch(error => {
+    var err = new Error('Error communicating with Unsplash (probably a missing API key)');
+    err.status = 500;
+    next(err);
   });
 });
 
