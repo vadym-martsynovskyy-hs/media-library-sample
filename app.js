@@ -1,29 +1,16 @@
+'use strict';
+
 var express = require('express');
 var path = require('path');
-var favicon = require('serve-favicon');
-var logger = require('morgan');
-var cookieParser = require('cookie-parser');
-var bodyParser = require('body-parser');
 var axios = require('axios');
-
 var app = express();
-
-// Express configs -- ignore
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'jade');
-app.use(logger('dev'));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
 
 // Unsplash API
 const API_URL = 'https://api.unsplash.com/photos/search';
 const TOS_URL = 'https://unsplash.com/terms';
 const CLIENT_ID = '3c4787225ca79319cbfabaf469c1331c01ceb356c56de022215dccd454da1586';
 
-// Endpoint
-app.use('/v1/media', (req, res, next) => {
+app.use('/v1/media', function (req, res, next) {
   // Call 3rd party API to retrieve content
   axios({
     method:'get',
@@ -81,18 +68,20 @@ app.use('/v1/status', (req, res) => {
 
 
 // Default error handling
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
   var err = new Error('Not Found');
   err.status = 404;
   next(err);
 });
 
-app.use(function(err, req, res, next) {
+app.use(function (err, req, res, next) {
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
 
   res.status(err.status || 500);
-  res.render('error');
+  res.json(err.message);
 });
 
-module.exports = app;
+app.listen(process.env.PORT || 8080, function () {
+    console.log('Example app listening on port ' + (process.env.PORT || 8080) + '!');
+});
