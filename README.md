@@ -1,6 +1,7 @@
 # Running the App
 `npm install`
 `npm start`
+Put your API key in ```app.js``` under CLIENT_ID on ~line 11
 Navigate to `localhost:8080/v1/media` or `localhost:8080/v1/status`
 
 # Testing your Media Library App with Runscope
