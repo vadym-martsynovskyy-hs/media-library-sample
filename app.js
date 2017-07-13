@@ -83,5 +83,5 @@ app.use(function (err, req, res, next) {
 });
 
 app.listen(process.env.PORT || 8080, function () {
-    console.log('Example app listening on port ' + (process.env.PORT || 8080) + '!');
+    console.log(`Example app listening on port ${process.env.PORT || 8080}!`);
 });
